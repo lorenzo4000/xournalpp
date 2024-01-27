@@ -3,6 +3,7 @@
 #include <algorithm>  // for max, min
 #include <cmath>      // for abs, NAN
 #include <memory>     // for __shared_ptr_access
+#include <iostream>     // for __shared_ptr_access
 
 #include <gdk/gdk.h>  // for GdkRGBA, gdk_cairo_set_source_rgba
 
@@ -31,10 +32,31 @@ auto Selection::finalize(PageRef page, bool disableMultilayer, Document* doc) ->
             bool selectionOnLayer = false;
             Element::Index pos = 0;
             for (auto&& e: l->getElements()) {
-                if (e->isInSelection(this)) {
+				auto visible_x = e->getX() 						  <= 0 		   		   ? 0 : e->getX();
+				auto visible_y = e->getY()						  <= 0				   ? 0 : e->getY();
+				auto visible_w = e->getX() + e->getElementWidth()  >= page->getWidth()  ? page->getWidth()  - visible_x : e->getElementWidth();
+				auto visible_h = e->getY() + e->getElementHeight() >= page->getHeight() ? page->getHeight() - visible_y : e->getElementHeight();
+				if(this->contains(visible_x, visible_y) && 
+				   this->contains(visible_x + visible_w, visible_y) &&
+				   this->contains(visible_x, visible_y + visible_h) &&
+				   this->contains(visible_x + visible_w, visible_y + visible_h)) {
                     this->selectedElements.emplace_back(e.get(), pos);
                     selectionOnLayer = true;
                 }
+				//else {
+				//	// if element is partially outside the page and we are trying to select the whole visible part of the element
+				//	// we should do it.
+				//	g_info("element x : %f  element y : %f  element height : %f  element widht : %f\n", e->getX(), e->getY(), e->getElementWidth(), e->getElementHeight());  
+				//	g_info("pageWidth : %f  pageHeight : %f\n", page->getWidth(), page->getHeight());  
+
+				//	if((e->getX() + e->getElementWidth()  >= page->getWidth()  && this->bbox.getX() + this->bbox.getWidth()  >= page->getWidth()  && this->contains(e->getX, e->getY) && this->contains(e->getX, e->getY + e->getElementHeight)) || 
+				//	   (e->getY() + e->getElementHeight() >= page->getHeight() && this->bbox.getY() + this->bbox.getHeight() >= page->getHeight() && this->contains(e->getX, e->getY) && this->contains(e->getX, e->getY + e->getElementHeight)) || ) ||
+				//	   (e->getX() 						  <= 0 		   		   && this->bbox.getX()							 <= 0	    		  ) || 
+				//	   (e->getY()						  <= 0				   && this->bbox.getY()							 <= 0				  ) ){ 
+				//			this->selectedElements.emplace_back(e.get(), pos);
+				//			selectionOnLayer = true;
+				//	}
+				//}
                 pos++;
             }
             if (selectionOnLayer) {
@@ -47,10 +69,31 @@ auto Selection::finalize(PageRef page, bool disableMultilayer, Document* doc) ->
         Layer* l = page->getSelectedLayer();
         Element::Index pos = 0;
         for (auto&& e: l->getElements()) {
-            if (e->isInSelection(this)) {
+			auto visible_x = e->getX() 						  <= 0 		   		   ? 0 : e->getX();
+			auto visible_y = e->getY()						  <= 0				   ? 0 : e->getY();
+			auto visible_w = e->getX() + e->getElementWidth()  >= page->getWidth()  ? page->getWidth()  - visible_x : e->getElementWidth();
+			auto visible_h = e->getY() + e->getElementHeight() >= page->getHeight() ? page->getHeight() - visible_y : e->getElementHeight();
+			if(this->contains(visible_x, visible_y) && 
+			   this->contains(visible_x + visible_w, visible_y) &&
+			   this->contains(visible_x, visible_y + visible_h) &&
+			   this->contains(visible_x + visible_w, visible_y + visible_h)) {
                 this->selectedElements.emplace_back(e.get(), pos);
                 layerId = page->getSelectedLayerId();
-            }
+            } 
+			//else {
+			//	// if element is partially outside the page and we are trying to select the whole visible part of the element
+			//	// we should do it.
+			//	g_info("element x : %f  element y : %f  element height : %f  element widht : %f\n", e->getX(), e->getY(), e->getElementWidth(), e->getElementHeight());  
+			//	g_info("pageWidth : %f  pageHeight : %f\n", page->getWidth(), page->getHeight());  
+
+			//	if((e->getX() + e->getElementWidth()  >= page->getWidth()  && this->bbox.getX() + this->bbox.getWidth()  >= page->getWidth()  ) || 
+			//	   (e->getY() + e->getElementHeight() >= page->getHeight() && this->bbox.getY() + this->bbox.getHeight() >= page->getHeight() ) ||
+			//	   (e->getX() 						  <= 0 		   		   && this->bbox.getX()							 <= 0	    		  ) || 
+			//	   (e->getY()						  <= 0				   && this->bbox.getY()							 <= 0				  ) ){ 
+			//		this->selectedElements.emplace_back(e.get(), pos);
+			//		layerId = page->getSelectedLayerId();
+			//	}
+			//}
             pos++;
         }
     }
